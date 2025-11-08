@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev:next": "next dev",
+    "dev:api": "node server/api-sample.mjs",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:next\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "concurrently": "^8.2.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
     "maplibre-gl": "^5.11.0",
     "next": "16.0.1",
     "react": "19.2.0",

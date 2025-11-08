@@ -1,4 +1,4 @@
-import "./globals.css";
+import "../styles/globals.css";
 import { geistSans, geistMono } from "../lib/constants";
 
 export default function RootLayout({
