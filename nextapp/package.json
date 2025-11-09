@@ -8,9 +8,11 @@
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:next\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:migrate": "tsx migrations/run.mjs"
   },
   "dependencies": {
+    "canvas": "^3.2.0",
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "express": "^4.19.2",

@@ -1,5 +1,5 @@
 import express from "express";
-import { pool } from "./db";
+import pool from "./db";
 const router = express.Router();
 
 router.get("/", async (req: express.Request, res: express.Response) => {
@@ -53,8 +53,11 @@ router.get("/", async (req: express.Request, res: express.Response) => {
     const { rows } = await pool.query(sql, params);
     res.set("Cache-Control", "no-store").json(rows[0].fc);
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "server_error" });
+    console.error('API Error:', e);
+    res.status(500).json({ 
+      error: "server_error",
+      message: e instanceof Error ? e.message : String(e)
+    });
   }
 });
 

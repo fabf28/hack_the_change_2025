@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from "react";
-import maplibregl, { Map } from "maplibre-gl";
+import maplibregl from "maplibre-gl";
 import Image from "next/image";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { MapViewProps, MapIssue } from "./types";
@@ -28,13 +28,20 @@ export default function IssuesMap({
   dataProvider,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<Map | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
 
   const styleUrl = `https://api.maptiler.com/maps/hybrid/style.json?key=${process.env.NEXT_PUBLIC_MAPTILER_KEY}`;
 
   // Initialize map
   useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    // If no container or map already exists, skip
+    if (!containerRef.current) return;
+    
+    // Clean up any existing map instance before creating a new one
+    if (mapRef.current instanceof maplibregl.Map) {
+      mapRef.current.remove();
+    }
+    mapRef.current = null;
 
     const map = new maplibregl.Map({
       container: containerRef.current,
@@ -49,12 +56,26 @@ export default function IssuesMap({
 
       map.on("load", async () => {
         // Load category icons
-        await Promise.all([
+        // Create a default icon as a data URL
+      const defaultIconCanvas = document.createElement('canvas');
+      defaultIconCanvas.width = 22;
+      defaultIconCanvas.height = 22;
+      const ctx = defaultIconCanvas.getContext('2d')!;
+      ctx.beginPath();
+      ctx.arc(11, 11, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#000000';
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      const defaultIconUrl = defaultIconCanvas.toDataURL();
+
+      await Promise.all([
           loadIcon(map, "icon-water", "/icons/water.png"),
           loadIcon(map, "icon-electrical", "/icons/electrical.png"),
           loadIcon(map, "icon-road", "/icons/road.png"),
           loadIcon(map, "icon-fire", "/icons/fire.png"),
-          loadIcon(map, "icon-default", "/icons/default.png"),
+          loadIcon(map, "icon-default", defaultIconUrl),
         ]);
 
         if (dataProvider) {
@@ -143,33 +164,7 @@ export default function IssuesMap({
         paint: { "text-color": "#ffffff" }
       });
 
-        // Add icons layer for individual points
-        map.addLayer({
-          id: "issues-icons",
-          type: "symbol",
-          source: "issues",
-          filter: ["!", ["has", "point_count"]], // only single features, not clusters
-          layout: {
-            "icon-image": [
-              "match",
-              ["get", "category"],
-              "water", "icon-water",
-              "electrical", "icon-electrical",
-              "road", "icon-road",
-              "fire", "icon-fire",
-              /* default */ "icon-default",
-            ],
-            "icon-size": [
-              "case",
-              ["boolean", ["feature-state", "hover"], false],
-              1.1,
-              ["interpolate", ["linear"], ["zoom"], 6, 0.8, 12, 1.0]
-            ],
-            "icon-allow-overlap": true
-          }
-        });
-
-      // Add a faint pulse layer underneath halos for a glowing look
+        // Add a faint pulse layer for glow
       map.addLayer({
         id: "issues-pulse",
         type: "circle",
@@ -192,7 +187,76 @@ export default function IssuesMap({
           "circle-opacity": 0.25,
           "circle-blur": 0.6
         }
-      }, "issues-halo");
+      });
+
+      // Add halo layer
+      map.addLayer({
+        id: "issues-halo",
+        type: "circle",
+        source: "issues",
+        filter: ["!", ["has", "point_count"]],
+        paint: {
+          "circle-radius": [
+            "interpolate", ["linear"], ["zoom"],
+            6, 6,
+            12, 10
+          ],
+          "circle-color": [
+            "match",
+            ["get", "category"],
+            "water", "#00E5FF",
+            "electrical", "#FFD166",
+            "road", "#FF5C5C",
+            "fire", "#FF5C5C",
+            /* default */ "#9CA3AF"
+          ],
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#FFFFFF",
+          "circle-opacity": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false], 1.0, 0.9
+          ],
+          "circle-blur": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false], 0.05, 0.15
+          ]
+        }
+      });
+
+      // Add icons layer on top
+      map.addLayer({
+        id: "issues-icons",
+        type: "symbol",
+        source: "issues",
+        filter: ["!", ["has", "point_count"]], // only single features, not clusters
+        layout: {
+          "icon-image": [
+            "match",
+            ["get", "category"],
+            "water", "icon-water",
+            "electrical", "icon-electrical",
+            "road", "icon-road",
+            "fire", "icon-fire",
+            /* default */ "icon-default",
+          ],
+          "icon-size": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            6, 0.8,
+            12, 1.0
+          ],
+          "icon-allow-overlap": true
+        },
+        paint: {
+          "icon-opacity": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            1.0,
+            0.8
+          ]
+        }
+      });
 
       // Add single point halo layer (with zoom scaling and hover brightness)
       map.addLayer({
