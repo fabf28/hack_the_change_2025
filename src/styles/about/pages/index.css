@@ -1,0 +1,333 @@
+/* about.css */
+
+.about-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 50%, #e0e7ff 100%);
+}
+
+/* Header Styles */
+.about-header {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.about-header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.about-logo {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Main Content Container */
+.about-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
+
+/* Hero Section */
+.about-hero {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.about-title {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.about-subtitle {
+  font-size: 1.25rem;
+  color: #4b5563;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Section Styles */
+.about-section {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  margin-bottom: 48px;
+  border: 1px solid #e5e7eb;
+}
+
+.section-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.section-title.center {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.section-text {
+  font-size: 1.125rem;
+  color: #374151;
+  line-height: 1.7;
+}
+
+/* Mission Section */
+.mission-section {
+  margin-bottom: 48px;
+}
+
+/* How It Works Section */
+.how-it-works-section {
+  margin-bottom: 48px;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+}
+
+.step-card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.3s ease;
+}
+
+.step-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.step-number {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  color: #ffffff;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.step-1 {
+  background-color: #2563eb;
+}
+
+.step-2 {
+  background-color: #4f46e5;
+}
+
+.step-3 {
+  background-color: #7c3aed;
+}
+
+.step-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.step-text {
+  color: #4b5563;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* Benefits Section */
+.benefits-section {
+  margin-bottom: 48px;
+}
+
+.benefits-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.benefit-card {
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 32px;
+  color: #ffffff;
+}
+
+.benefit-citizens {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.benefit-contractors {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+}
+
+.benefit-government {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+.benefit-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.benefit-text {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+/* Features Section */
+.features-section {
+  margin-bottom: 48px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.feature-check {
+  width: 32px;
+  height: 32px;
+  background-color: #10b981;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.feature-content {
+  flex: 1;
+}
+
+.feature-title {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.feature-text {
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+/* CTA Section */
+.cta-section {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  padding: 48px;
+  text-align: center;
+  color: #ffffff;
+  margin-bottom: 64px;
+}
+
+.cta-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.cta-text {
+  font-size: 1.25rem;
+  margin-bottom: 32px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.95;
+}
+
+.cta-button {
+  background-color: #ffffff;
+  color: #2563eb;
+  padding: 16px 32px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.125rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.cta-button:hover {
+  background-color: #f3f4f6;
+}
+
+/* Footer */
+.about-footer {
+  background-color: #111827;
+  color: #9ca3af;
+  padding: 32px 0;
+  margin-top: 64px;
+}
+
+.about-footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .about-title {
+    font-size: 2rem;
+  }
+
+  .about-subtitle {
+    font-size: 1rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .about-section {
+    padding: 24px;
+  }
+
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-section {
+    padding: 32px 24px;
+  }
+
+  .cta-title {
+    font-size: 1.5rem;
+  }
+
+  .cta-text {
+    font-size: 1rem;
+  }
+}

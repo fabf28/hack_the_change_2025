@@ -134,6 +134,7 @@ const SubmitIncident = () => {
   };
 
   const handleSubmit = async () => {
+    console.log("click");
     if (!imageFile) return toast.error("Please upload an image");
     if (!description.trim()) return toast.error("Please provide a description");
     if (!contactInfo.trim())
@@ -144,22 +145,62 @@ const SubmitIncident = () => {
         "Please capture your location or select it on the map"
       );
 
-    const payload = {
-      description,
-      contact_info: contactInfo,
-      severity: severity.value,
-      location: {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        accuracy: location.accuracy,
-      },
-      image: imagePreview, // base64 string
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      // Create FormData for multipart/form-data
+      const formData = new FormData();
 
-    // TODO: send to your server
-    console.log("Incident Report Payload:", JSON.stringify(payload, null, 2));
-    toast.success("Incident report prepared! Check console for JSON data.");
+      // Add the image file
+      formData.append("image", imageFile);
+
+      // Add text fields matching backend expectations
+      formData.append("category", "Infrastructure Issue"); // You can make this dynamic if needed
+      formData.append("description", description);
+      formData.append(
+        "geo_data",
+        JSON.stringify({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy,
+        })
+      );
+      formData.append("serverity", severity.value); // Note: backend uses "serverity" (typo)
+
+      // Parse contact info (email or phone)
+      const isEmail = contactInfo.includes("@");
+      if (isEmail) {
+        formData.append("email", contactInfo);
+        formData.append("phone_number", "");
+      } else {
+        formData.append("email", "");
+        formData.append("phone_number", contactInfo);
+      }
+
+      formData.append("contractor_assigned", "");
+
+      // Send to backend
+      const response = await fetch("http://localhost:9000/api/report", {
+        method: "POST",
+        body: formData,
+        // Don't set Content-Type header - browser will set it with boundary
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Report created:", result);
+
+      toast.success(
+        `Incident report submitted! Report ID: ${result.report_id}`
+      );
+
+      // Optional: Reset form or redirect
+      // router.push("/home");
+    } catch (error) {
+      console.error("Submit error:", error);
+      toast.error("Failed to submit report. Please try again.");
+    }
   };
 
   const handleHome = () => router.push("/home");
@@ -391,7 +432,7 @@ const SubmitIncident = () => {
           <div className="submit-button-container">
             <Button
               label="Submit Incident Report"
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               className="submit-button"
             />
           </div>
