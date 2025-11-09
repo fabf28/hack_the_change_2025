@@ -15,4 +15,5 @@ export type MapViewProps = {
   zoom?: number;
   issues?: MapIssue[];
   onIssueClick?: (issue: MapIssue) => void;
+  dataProvider?: import('./data/restProvider').IDataProvider;
 };

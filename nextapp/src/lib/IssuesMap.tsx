@@ -6,11 +6,26 @@ import Image from "next/image";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { MapViewProps, MapIssue } from "./types";
 
+async function loadIcon(map: maplibregl.Map, id: string, url: string): Promise<void> {
+  try {
+    if (map.hasImage(id)) return;
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const imageBitmap = await createImageBitmap(blob);
+    if (map.hasImage(id)) map.removeImage(id);
+    map.addImage(id, imageBitmap);
+  } catch (error) {
+    console.error(`Failed to load icon ${id}:`, error);
+    throw error;
+  }
+}
+
 export default function IssuesMap({
   center = [-114.0719, 51.0447], // Calgary
   zoom = 6,
   issues = [],
   onIssueClick,
+  dataProvider,
 }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Map | null>(null);
@@ -32,14 +47,50 @@ export default function IssuesMap({
 
     map.addControl(new maplibregl.NavigationControl(), "top-right");
 
-    map.on("load", () => {
+      map.on("load", async () => {
+        // Load category icons
+        await Promise.all([
+          loadIcon(map, "icon-water", "/icons/water.png"),
+          loadIcon(map, "icon-electrical", "/icons/electrical.png"),
+          loadIcon(map, "icon-road", "/icons/road.png"),
+          loadIcon(map, "icon-fire", "/icons/fire.png"),
+          loadIcon(map, "icon-default", "/icons/default.png"),
+        ]);
+
+        if (dataProvider) {
+          // Add handlers to fetch new data when map moves
+          const updateData = () => {
+            const bounds = map.getBounds();
+            const bbox: [number, number, number, number] = [
+              bounds.getWest(),
+              bounds.getSouth(),
+              bounds.getEast(),
+              bounds.getNorth()
+            ];
+
+            dataProvider.getFeatures(bbox)
+              .then((data: GeoJSON.FeatureCollection) => {
+                const src = map.getSource("issues") as maplibregl.GeoJSONSource;
+                if (src) src.setData(data);
+              })
+              .catch((error: Error) => {
+                console.error('Failed to fetch issues:', error);
+              });
+          };
+
+          map.on("moveend", updateData);
+          // Initial data fetch
+          updateData();
+        }
+
       // Add clustered source
       map.addSource("issues", {
         type: "geojson",
         data: {
           type: "FeatureCollection",
-          features: issues.map((issue) => ({
+          features: issues.map((issue, i) => ({
             type: "Feature",
+            id: issue.id ?? i,
             properties: { ...issue },
             geometry: { type: "Point", coordinates: [issue.location.lng, issue.location.lat] },
           })),
@@ -92,26 +143,88 @@ export default function IssuesMap({
         paint: { "text-color": "#ffffff" }
       });
 
-      // Add single point halo layer
+        // Add icons layer for individual points
+        map.addLayer({
+          id: "issues-icons",
+          type: "symbol",
+          source: "issues",
+          filter: ["!", ["has", "point_count"]], // only single features, not clusters
+          layout: {
+            "icon-image": [
+              "match",
+              ["get", "category"],
+              "water", "icon-water",
+              "electrical", "icon-electrical",
+              "road", "icon-road",
+              "fire", "icon-fire",
+              /* default */ "icon-default",
+            ],
+            "icon-size": [
+              "case",
+              ["boolean", ["feature-state", "hover"], false],
+              1.1,
+              ["interpolate", ["linear"], ["zoom"], 6, 0.8, 12, 1.0]
+            ],
+            "icon-allow-overlap": true
+          }
+        });
+
+      // Add a faint pulse layer underneath halos for a glowing look
+      map.addLayer({
+        id: "issues-pulse",
+        type: "circle",
+        source: "issues",
+        filter: ["!", ["has", "point_count"]],
+        paint: {
+          "circle-radius": [
+            "interpolate", ["linear"], ["zoom"],
+            6, 8,
+            12, 14
+          ],
+          "circle-color": [
+            "match", ["get", "category"],
+            "water", "#00E5FF",
+            "electrical", "#FFD166",
+            "road", "#FF5C5C",
+            "fire", "#FF5C5C",
+            "#9CA3AF"
+          ],
+          "circle-opacity": 0.25,
+          "circle-blur": 0.6
+        }
+      }, "issues-halo");
+
+      // Add single point halo layer (with zoom scaling and hover brightness)
       map.addLayer({
         id: "issues-halo",
         type: "circle",
         source: "issues",
         filter: ["!", ["has", "point_count"]],
         paint: {
-          "circle-radius": 7,
+          "circle-radius": [
+            "interpolate", ["linear"], ["zoom"],
+            6, 6,
+            12, 10
+          ],
           "circle-color": [
             "match",
-            ["get", "status"],
-            "open", "#00E5FF",
-            "in-progress", "#FFD166",
-            "resolved", "#06D6A0",
-            "#00E5FF"
+            ["get", "category"],
+            "water", "#00E5FF",
+            "electrical", "#FFD166",
+            "road", "#FF5C5C",
+            "fire", "#FF5C5C",
+            /* default */ "#9CA3AF"
           ],
           "circle-stroke-width": 2,
           "circle-stroke-color": "#FFFFFF",
-          "circle-opacity": 0.9,
-          "circle-blur": 0.15,
+          "circle-opacity": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false], 1.0, 0.9
+          ],
+          "circle-blur": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false], 0.05, 0.15
+          ]
         },
       });
 
@@ -140,61 +253,112 @@ export default function IssuesMap({
 
       // Setup single point click handlers
       if (onIssueClick) {
-        map.on("click", "issues-halo", (e) => {
+          map.on("click", "issues-icons", (e) => {
           if (!e.features?.[0]) return;
           const props = e.features[0].properties ?? {};
           const issue = props as unknown as MapIssue;
           onIssueClick(issue);
         });
 
-        map.on("mouseenter", "issues-halo", () => {
+          map.on("mouseenter", "issues-icons", () => {
           map.getCanvas().style.cursor = "pointer";
         });
-        map.on("mouseleave", "issues-halo", () => {
+          map.on("mouseleave", "issues-icons", () => {
           map.getCanvas().style.cursor = "";
         });
       }
       
-      // Set initial data after layer is added
+        // Hover feature-state and tooltip
+        let hoveredId: number | null = null;
+        const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false });
+
+        map.on("mousemove", "issues-icons", (e) => {
+          map.getCanvas().style.cursor = "pointer";
+          const f = e.features?.[0];
+          if (!f) return;
+          const id = (f.id as number) ?? null;
+          if (id === null) return;
+          if (hoveredId !== null) {
+            map.setFeatureState({ source: "issues", id: hoveredId }, { hover: false });
+          }
+          hoveredId = id;
+          map.setFeatureState({ source: "issues", id }, { hover: true });
+
+  const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+    const p = f.properties as Record<string, unknown>;
+          popup
+            .setLngLat(coords)
+            .setHTML(`<div style="font: 12px/1.4 system-ui;"><strong>${p.title ?? "Issue"}</strong><br/><span>${p.category ?? "unknown"}</span> • <span>${p.status ?? ""}</span></div>`)
+            .addTo(map);
+        });
+
+        map.on("mouseleave", "issues-icons", () => {
+          map.getCanvas().style.cursor = "";
+          if (hoveredId !== null) {
+            map.setFeatureState({ source: "issues", id: hoveredId }, { hover: false });
+            hoveredId = null;
+          }
+          popup.remove();
+        });
+
+        // Set initial data after layer is added
       const src = map.getSource("issues") as maplibregl.GeoJSONSource;
       if (src) {
         src.setData({
           type: "FeatureCollection",
-          features: issues.map((issue) => ({
-            type: "Feature",
-            properties: { ...issue },
-            geometry: {
-              type: "Point",
-              coordinates: [issue.location.lng, issue.location.lat],
-            },
-          })),
+            features: issues.map((issue, i) => ({
+              type: "Feature",
+              id: issue.id ?? i,
+              properties: { ...issue },
+              geometry: {
+                type: "Point",
+                coordinates: [issue.location.lng, issue.location.lat],
+              },
+            })),
         });
       }
     });
 
     return () => { map.remove(); mapRef.current = null; };
-  }, [center, zoom, styleUrl, onIssueClick, issues]);
+  }, [center, zoom, styleUrl, onIssueClick, issues, dataProvider]);
 
-  // Update data when issues change
+  // Update data when issues change OR when map moves (if using dataProvider)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
     const src = map.getSource("issues") as maplibregl.GeoJSONSource | undefined;
     if (!src) return;
 
-    const fc: GeoJSON.FeatureCollection = {
-      type: "FeatureCollection",
-      features: issues.map((issue) => ({
-        type: "Feature",
-        properties: { ...issue },
-        geometry: {
-          type: "Point",
-          coordinates: [issue.location.lng, issue.location.lat],
-        },
-      })),
-    };
-    src.setData(fc);
-  }, [issues]);
+    if (dataProvider) {
+      const bounds = map.getBounds();
+      const bbox: [number, number, number, number] = [
+        bounds.getWest(),
+        bounds.getSouth(),
+        bounds.getEast(),
+        bounds.getNorth()
+      ];
+
+      dataProvider.getFeatures(bbox).then(data => {
+        src.setData(data);
+      }).catch(error => {
+        console.error('Failed to fetch issues:', error);
+      });
+    } else if (issues) {
+      const fc: GeoJSON.FeatureCollection = {
+        type: "FeatureCollection",
+        features: issues.map((issue, i) => ({
+          type: "Feature",
+          id: issue.id ?? i,
+          properties: { ...issue },
+          geometry: {
+            type: "Point",
+            coordinates: [issue.location.lng, issue.location.lat],
+          },
+        })),
+      };
+      src.setData(fc);
+    }
+  }, [issues, dataProvider]);
 
   return (
     <>
@@ -230,6 +394,11 @@ export default function IssuesMap({
           <span>Road</span>
           <span style={{ marginLeft: "auto", width: 10, height: 10, background: "#EF4444", borderRadius: "50%", display: "inline-block", border: "1px solid #999" }} />
         </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Image src="/icons/fire.png" alt="fire" width={16} height={16} />
+            <span>Fire</span>
+            <span style={{ marginLeft: "auto", width: 10, height: 10, background: "#EF4444", borderRadius: "50%", display: "inline-block", border: "1px solid #999" }} />
+          </div>
       </div>
     </>
   );
