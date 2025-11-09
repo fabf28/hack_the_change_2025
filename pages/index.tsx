@@ -1,90 +1,69 @@
 // pages/home.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import MapPicker from "@/src/components/ui/MapPicker";
 import "@/src/styles/general/pages/index.css";
 
 const Home = () => {
   const router = useRouter();
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Sample incident data with coordinates - replace with real data later
-  const [incidents] = useState([
-    {
-      id: 1,
-      image: "/assets/images/incidents/pothole1.jpg",
-      type: "Pothole",
-      city: "Calgary, AB",
-      datetime: "Nov 7, 2025 2:30 PM",
-      latitude: 51.09640448453306,
-      longitude: -114.13143914032896,
-    },
-    {
-      id: 2,
-      image: "/assets/images/incidents/streetlight1.jpg",
-      type: "Broken Streetlight",
-      city: "Calgary, AB",
-      datetime: "Nov 7, 2025 1:15 PM",
-      latitude: 51.042,
-      longitude: -114.074,
-    },
-    {
-      id: 3,
-      image: "/assets/images/incidents/flooding1.jpg",
-      type: "Street Flooding",
-      city: "Calgary, AB",
-      datetime: "Nov 6, 2025 11:45 AM",
-      latitude: 51.051,
-      longitude: -114.069,
-    },
-    {
-      id: 4,
-      image: "/assets/images/incidents/tree1.jpg",
-      type: "Fallen Tree",
-      city: "Calgary, AB",
-      datetime: "Nov 6, 2025 9:20 AM",
-      latitude: 51.048,
-      longitude: -114.063,
-    },
-    {
-      id: 5,
-      image: "/assets/images/incidents/graffiti1.jpg",
-      type: "Graffiti",
-      city: "Calgary, AB",
-      datetime: "Nov 5, 2025 4:30 PM",
-      latitude: 51.045,
-      longitude: -114.058,
-    },
-    {
-      id: 6,
-      image: "/assets/images/incidents/pothole2.jpg",
-      type: "Pothole",
-      city: "Calgary, AB",
-      datetime: "Nov 5, 2025 10:15 AM",
-      latitude: 51.055,
-      longitude: -114.075,
-    },
-    {
-      id: 7,
-      image: "/assets/images/incidents/sign1.jpg",
-      type: "Damaged Road Sign",
-      city: "Calgary, AB",
-      datetime: "Nov 4, 2025 3:45 PM",
-      latitude: 51.038,
-      longitude: -114.08,
-    },
-    {
-      id: 8,
-      image: "/assets/images/incidents/sidewalk1.jpg",
-      type: "Cracked Sidewalk",
-      city: "Calgary, AB",
-      datetime: "Nov 4, 2025 12:00 PM",
-      latitude: 51.052,
-      longitude: -114.067,
-    },
-  ]);
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("http://localhost:9000/api/reports");
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Transform API data to match the component's expected format
+        const transformedIncidents = data.reports.map((report) => ({
+          id: report.report_id,
+          image: report.image_url,
+          type: report.category,
+          city: "Calgary, AB", // You might want to reverse geocode this
+          datetime: new Date(parseInt(report.report_time)).toLocaleString(
+            "en-US",
+            {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            }
+          ),
+          latitude: report.geo_data.latitude,
+          longitude: report.geo_data.longitude,
+          severity: report.serverity,
+          status: report.report_status,
+          description: report.description,
+          email: report.email,
+          phoneNumber: report.phone_number,
+          contractorAssigned: report.contractor_assigned,
+        }));
+
+        setIncidents(transformedIncidents);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching incidents:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIncidents();
+  }, []);
 
   const handleSubmitIncident = () => {
-    router.push("/submit-incident");
+    router.push("/report-incident");
   };
 
   const handleAbout = () => {
@@ -93,11 +72,9 @@ const Home = () => {
 
   const handleMarkerClick = (point) => {
     console.log("Clicked incident:", point);
-    // Optional: scroll to the incident card or show details
     const element = document.getElementById(`incident-${point.id}`);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
-      // Optional: add a temporary highlight effect
       element.classList.add("highlight");
       setTimeout(() => element.classList.remove("highlight"), 2000);
     }
@@ -135,6 +112,23 @@ const Home = () => {
         {/* Incidents Grid - Scrollable Left Side */}
         <div className="incidents-section">
           <h2 className="incidents-title">Recent Incidents</h2>
+
+          {loading && (
+            <div className="loading-message">Loading incidents...</div>
+          )}
+
+          {error && (
+            <div className="error-message">
+              Error loading incidents: {error}
+            </div>
+          )}
+
+          {!loading && !error && incidents.length === 0 && (
+            <div className="no-incidents-message">
+              No incidents reported yet.
+            </div>
+          )}
+
           <div className="incidents-grid">
             {incidents.map((incident) => (
               <div
@@ -157,6 +151,14 @@ const Home = () => {
                   <h3 className="incident-type">{incident.type}</h3>
                   <p className="incident-city">{incident.city}</p>
                   <p className="incident-datetime">{incident.datetime}</p>
+                  {incident.status && (
+                    <p className="incident-status">Status: {incident.status}</p>
+                  )}
+                  {incident.description && (
+                    <p className="incident-description">
+                      {incident.description}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -166,13 +168,15 @@ const Home = () => {
         {/* Fixed Map - Right Side */}
         <div className="map-section">
           <div className="map-container">
-            <MapPicker
-              points={incidents}
-              emoji="🚧"
-              height="100%"
-              width="100%"
-              onMarkerClick={handleMarkerClick}
-            />
+            {!loading && (
+              <MapPicker
+                points={incidents}
+                emoji="🚧"
+                height="100%"
+                width="100%"
+                onMarkerClick={handleMarkerClick}
+              />
+            )}
           </div>
         </div>
       </div>

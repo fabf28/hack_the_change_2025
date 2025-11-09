@@ -6,7 +6,8 @@ import Button from "@/src/components/ui/Button/Button";
 import Text from "@/src/components/ui/Input/Text";
 import VSpace from "@/src/components/ui/Space/VSpace";
 import Select from "react-select";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "maplibre-gl/dist/maplibre-gl.css"; // MapLibre controls/attribution CSS
 import "@/src/styles/report-incident/index.css";
 
@@ -47,9 +48,9 @@ const SubmitIncident = () => {
   const defaultLng = -114.0719;
 
   const severityOptions = [
-    { value: "low", label: "🟢 Low" },
-    { value: "medium", label: "🟡 Medium" },
-    { value: "high", label: "🔴 High" },
+    { value: 1, label: "🟢 Low" },
+    { value: 2, label: "🟡 Medium" },
+    { value: 3, label: "🔴 High" },
   ];
 
   const initialViewState = useMemo(
@@ -134,16 +135,40 @@ const SubmitIncident = () => {
   };
 
   const handleSubmit = async () => {
-    console.log("click");
-    if (!imageFile) return toast.error("Please upload an image");
-    if (!description.trim()) return toast.error("Please provide a description");
-    if (!contactInfo.trim())
+    console.log("🔵 Submit button clicked!"); // Debug log
+    console.log("📊 Form state:", {
+      hasImage: !!imageFile,
+      description: description.substring(0, 50),
+      contactInfo: contactInfo.substring(0, 20),
+      severity: severity,
+      location: location,
+    });
+
+    if (!imageFile) {
+      console.log("❌ Validation failed: No image");
+      return toast.error("Please upload an image");
+    }
+    if (!description.trim()) {
+      console.log("❌ Validation failed: No description");
+      return toast.error("Please provide a description");
+    }
+
+    if (!contactInfo.trim()) {
+      console.log("❌ Validation failed: No contact info");
       return toast.error("Please provide contact information");
-    if (!severity) return toast.error("Please select a severity level");
-    if (!location)
+    }
+    if (!severity) {
+      console.log("❌ Validation failed: No severity");
+      return toast.error("Please select a severity level");
+    }
+    if (!location) {
+      console.log("❌ Validation failed: No location");
       return toast.error(
         "Please capture your location or select it on the map"
       );
+    }
+
+    console.log("✅ All validations passed!"); // Debug log
 
     try {
       // Create FormData for multipart/form-data
@@ -172,10 +197,12 @@ const SubmitIncident = () => {
         formData.append("phone_number", "");
       } else {
         formData.append("email", "");
-        formData.append("phone_number", contactInfo);
+        formData.append("phone_number", "");
       }
 
       formData.append("contractor_assigned", "");
+
+      console.log("🚀 Sending request to backend..."); // Debug log
 
       // Send to backend
       const response = await fetch("http://localhost:9000/api/report", {
@@ -184,12 +211,20 @@ const SubmitIncident = () => {
         // Don't set Content-Type header - browser will set it with boundary
       });
 
+      console.log(
+        "📡 Response received:",
+        response.status,
+        response.statusText
+      ); // Debug log
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Server error response:", errorText);
         throw new Error(`Server error: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log("Report created:", result);
+      console.log("✅ Report created successfully:", result);
 
       toast.success(
         `Incident report submitted! Report ID: ${result.report_id}`
@@ -198,8 +233,8 @@ const SubmitIncident = () => {
       // Optional: Reset form or redirect
       // router.push("/home");
     } catch (error) {
-      console.error("Submit error:", error);
-      toast.error("Failed to submit report. Please try again.");
+      console.error("❌ Submit error:", error);
+      toast.error(`Failed to submit report: ${error.message}`);
     }
   };
 
@@ -208,6 +243,18 @@ const SubmitIncident = () => {
 
   return (
     <div className="submit-incident-container">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
       {/* Navigation Bar */}
       <nav className="submit-navbar">
         <div className="navbar-content">
@@ -289,7 +336,7 @@ const SubmitIncident = () => {
           {/* Contact Info */}
           <div className="form-section">
             <Text
-              label="Contact Email or Phone Number *"
+              label="Contact Email*"
               value={contactInfo}
               handleChange={(value) => setContactInfo(value)}
               type="text"

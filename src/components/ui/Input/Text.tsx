@@ -8,6 +8,8 @@ interface InputProps {
   disabled?: boolean;
   id?: string;
   className?: string;
+  value?: string;
+  handleChange?: (value: string) => void;
 }
 
 const Text: React.FC<InputProps> = ({
@@ -17,6 +19,8 @@ const Text: React.FC<InputProps> = ({
   disabled = false,
   id,
   className,
+  value = "",
+  handleChange,
 }) => {
   return (
     <div id={id} className={className}>
@@ -30,6 +34,8 @@ const Text: React.FC<InputProps> = ({
         type={type}
         placeholder={placeholder}
         disabled={disabled}
+        value={value}
+        onChange={(e) => handleChange?.(e.target.value)}
       />
     </div>
   );
