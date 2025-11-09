@@ -259,17 +259,16 @@ const SubmitIncident = () => {
       <nav className="submit-navbar">
         <div className="navbar-content">
           <div className="navbar-logo">
-            <img
-              src="/assets/images/logo.png"
-              alt="CivicFix Logo"
-              width={90}
-              height={90}
-            />
+            <a href="/">
+              <img
+                src="/assets/images/logo.png"
+                alt="CivicFix Logo"
+                width={90}
+                height={90}
+              />
+            </a>
           </div>
           <div className="navbar-actions">
-            <button className="navbar-link-btn" onClick={handleHome}>
-              Home
-            </button>
             <button className="navbar-link-btn" onClick={handleAbout}>
               About
             </button>
@@ -334,13 +333,13 @@ const SubmitIncident = () => {
           <VSpace space={25} />
 
           {/* Contact Info */}
-          <div className="form-section">
+          <div className="form-section" style={{ width: "30em" }}>
             <Text
               label="Contact Email*"
               value={contactInfo}
               handleChange={(value) => setContactInfo(value)}
               type="text"
-              placeholder="your.email@example.com or (123) 456-7890"
+              placeholder="your.email@example.com"
             />
           </div>
 
@@ -396,7 +395,7 @@ const SubmitIncident = () => {
                 />
                 {showMap && (
                   <Button
-                    label={pinMode ? "✅ Pick location" : "🧷 Drop a pin"}
+                    label={pinMode ? "Pick location" : "🧷 Drop a pin"}
                     onClick={togglePinMode}
                     className={
                       pinMode ? "location-btn-success" : "location-btn-map"

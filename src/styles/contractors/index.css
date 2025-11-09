@@ -1,0 +1,258 @@
+/* contractor-register.css */
+
+.contractor-register-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 50%, #e0e7ff 100%);
+}
+
+/* Navigation Bar */
+.register-navbar {
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+  z-index: 1000;
+}
+
+.navbar-content {
+  max-width: 100%;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-logo img {
+  display: block;
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.navbar-link-btn {
+  background-color: transparent;
+  color: #374151;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.navbar-link-btn:hover {
+  color: #111827;
+}
+
+/* Main Content */
+.register-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+.register-form-container {
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px,
+    rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+  padding: 48px;
+}
+
+.register-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111827;
+  margin: 0;
+  text-align: center;
+}
+
+.register-subtitle {
+  font-size: 1.125rem;
+  color: #6b7280;
+  margin: 8px 0 0 0;
+  text-align: center;
+}
+
+/* Vertical Spacing */
+.v-space-10 {
+  height: 10px;
+}
+
+.v-space-20 {
+  height: 20px;
+}
+
+.v-space-25 {
+  height: 25px;
+}
+
+.v-space-30 {
+  height: 30px;
+}
+
+.v-space-40 {
+  height: 40px;
+}
+
+/* Form Sections */
+.form-section {
+  width: 100%;
+}
+
+.form-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  display: block;
+}
+
+/* Form Inputs */
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Description Textarea */
+.description-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.description-textarea:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.description-textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Submit Button */
+.submit-button-container {
+  display: flex;
+  justify-content: center;
+}
+
+.submit-button {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  font-size: 1.125rem;
+  font-weight: 600;
+  padding: 14px 48px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+
+.submit-button:hover:not(.loading) {
+  background-color: #059669;
+}
+
+.submit-button.loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Login Link */
+.login-text {
+  text-align: center;
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.login-link {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.login-link:hover {
+  color: #059669;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-content {
+    padding: 12px 16px;
+  }
+
+  .navbar-logo img {
+    width: 70px;
+    height: 70px;
+  }
+
+  .navbar-link-btn {
+    padding: 8px 12px;
+    font-size: 0.875rem;
+  }
+
+  .register-content {
+    padding: 24px 16px;
+  }
+
+  .register-form-container {
+    padding: 32px 24px;
+  }
+
+  .register-title {
+    font-size: 1.5rem;
+  }
+
+  .register-subtitle {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .navbar-actions {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .register-form-container {
+    padding: 24px 16px;
+  }
+
+  .submit-button {
+    font-size: 1rem;
+    padding: 12px 32px;
+  }
+}

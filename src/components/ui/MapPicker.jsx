@@ -9,6 +9,24 @@ import dynamic from "next/dynamic";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+/**
+ * MapTiler Style Configuration
+ *
+ * We switched from MapLibre's demo style to MapTiler's hosted map styles.
+ * MapTiler provides global satellite imagery and street vector data compatible with MapLibre.
+ *
+ * - STYLE_HYBRID: Satellite imagery + vector road/label overlays
+ * - STYLE_STREETS: Standard vector street map
+ *
+ * The MapTiler API key (NEXT_PUBLIC_MAPTILER_KEY) allows secure access to their style.json endpoints.
+ * MapLibre consumes the style.json, which points to raster/vector tiles and fonts.
+ * Changing the style URL dynamically enables a satellite <-> street view toggle.
+ */
+const MAPTILER_KEY =
+  process.env.NEXT_PUBLIC_MAPTILER_KEY || "c4YOf9pXj6L7xe7XWpUS";
+const STYLE_STREETS = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
+const STYLE_HYBRID = `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+
 // Dynamic imports for SSR-friendly usage
 const Map = dynamic(
   () => import("react-map-gl/maplibre").then((m) => m.default),
@@ -30,7 +48,7 @@ const NavigationControl = dynamic(
  * Props:
  * - points: Array<{ id?: string|number, latitude: number, longitude: number }>
  * - emoji?: string (default "📍")
- * - styleUrl?: string (default MapTiler streets-v2; replace with your key)
+ * - styleUrl?: string (default MapTiler hybrid satellite; can override)
  * - height?: number|string (default 400)
  * - width?: number|string (default "100%")
  * - initialCenter?: { latitude: number, longitude: number } (used if no points)
@@ -52,12 +70,13 @@ const MapPicker = ({
   const mapRef = useRef(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [error, setError] = useState(null);
+  const [baseStyle, setBaseStyle] = useState("satellite"); // "satellite" or "streets"
 
   const mapStyleUrl = useMemo(() => {
     if (styleUrl) return styleUrl;
-    const key = process.env.NEXT_PUBLIC_MAPTILER_KEY || "c4YOf9pXj6L7xe7XWpUS";
-    return `https://api.maptiler.com/maps/streets-v2/style.json?key=${key}`;
-  }, [styleUrl]);
+    // Default to hybrid (satellite + labels)
+    return baseStyle === "satellite" ? STYLE_HYBRID : STYLE_STREETS;
+  }, [styleUrl, baseStyle]);
 
   // Filter valid points
   const validPoints = useMemo(() => {
@@ -187,6 +206,51 @@ const MapPicker = ({
 
   return (
     <div style={{ width, height, position: "relative" }}>
+      {/* Style Toggle UI */}
+      <div
+        style={{
+          position: "absolute",
+          top: 12,
+          left: 12,
+          zIndex: 3,
+          display: "flex",
+          gap: 8,
+        }}
+      >
+        <button
+          onClick={() => setBaseStyle("satellite")}
+          style={{
+            padding: "6px 10px",
+            borderRadius: 6,
+            fontSize: 12,
+            background: baseStyle === "satellite" ? "#111" : "#fff",
+            color: baseStyle === "satellite" ? "#fff" : "#111",
+            border: "1px solid #ccc",
+            cursor: "pointer",
+            fontWeight: baseStyle === "satellite" ? "600" : "400",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          🛰 Satellite
+        </button>
+        <button
+          onClick={() => setBaseStyle("streets")}
+          style={{
+            padding: "6px 10px",
+            borderRadius: 6,
+            fontSize: 12,
+            background: baseStyle === "streets" ? "#111" : "#fff",
+            color: baseStyle === "streets" ? "#fff" : "#111",
+            border: "1px solid #ccc",
+            cursor: "pointer",
+            fontWeight: baseStyle === "streets" ? "600" : "400",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+          }}
+        >
+          🗺 Streets
+        </button>
+      </div>
+
       <Map
         ref={mapRef}
         mapLib={maplibregl}
@@ -204,6 +268,13 @@ const MapPicker = ({
 
         {validPoints.map((p, idx) => {
           const key = p.id ?? `marker-${p.latitude}-${p.longitude}-${idx}`;
+
+          const emojs = {
+            roads: "🚧",
+            "snow & ice": "❄️",
+            "lighting & signals": "🚦",
+            "waste & sanitation": "🗑️",
+          };
 
           return (
             <Marker
@@ -243,7 +314,7 @@ const MapPicker = ({
                   e.currentTarget.style.transform = "scale(1)";
                 }}
               >
-                {emoji}
+                {emojs[p.type]}
               </div>
             </Marker>
           );

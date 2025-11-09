@@ -8,13 +8,15 @@ const About = () => {
       {/* Header */}
       <div className="about-header">
         <div className="about-header-content">
-          <img
-            src="/assets/images/logo.png"
-            width={150}
-            height={150}
-            alt="CivicFix Logo"
-            className="about-logo"
-          />
+          <a href="/">
+            <img
+              src="/assets/images/logo.png"
+              width={150}
+              height={150}
+              alt="CivicFix Logo"
+              className="about-logo"
+            />
+          </a>
         </div>
       </div>
 

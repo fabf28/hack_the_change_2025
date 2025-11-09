@@ -70,6 +70,10 @@ const Home = () => {
     router.push("/about");
   };
 
+  const handleContractors = () => {
+    router.push("/contractors");
+  };
+
   const handleMarkerClick = (point) => {
     console.log("Clicked incident:", point);
     const element = document.getElementById(`incident-${point.id}`);
@@ -86,16 +90,21 @@ const Home = () => {
       <nav className="home-navbar">
         <div className="navbar-content">
           <div className="navbar-logo">
-            <img
-              src="/assets/images/logo.png"
-              alt="CivicFix Logo"
-              width={80}
-              height={80}
-            />
+            <a href="/">
+              <img
+                src="/assets/images/logo.png"
+                alt="CivicFix Logo"
+                width={80}
+                height={80}
+              />
+            </a>
           </div>
           <div className="navbar-actions">
             <button className="navbar-about-btn" onClick={handleAbout}>
               About
+            </button>
+            <button className="navbar-about-btn" onClick={handleContractors}>
+              Contractors
             </button>
             <button
               className="navbar-submit-btn"
@@ -171,7 +180,6 @@ const Home = () => {
             {!loading && (
               <MapPicker
                 points={incidents}
-                emoji="🚧"
                 height="100%"
                 width="100%"
                 onMarkerClick={handleMarkerClick}
