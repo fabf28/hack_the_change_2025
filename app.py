@@ -1,12 +1,15 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import psycopg2
 from artificial_intelligence import classify_image
 import os
 
 app = Flask(__name__)
 
+CORS(app)
+
 # Neon database connection string
-DATABASE_URL = "XXX"
+DATABASE_URL = "postgresql://neondb_owner:npg_FvXsiOtq5M6c@ep-hidden-lab-afcfegj2-pooler.c-2.us-west-2.aws.neon.tech/civicfix?sslmode=require&channel_binding=require"
 
 
 def get_db_connection():
@@ -14,39 +17,94 @@ def get_db_connection():
     return conn
 
 
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
 def contractor_endpoint():
-    data = request.get_json()
+    if request.method == 'POST':
+        data = request.get_json()
 
-    business_number = data.get('business_number')
-    name = data.get('name')
-    email = data.get('email')
-    password = data.get('password')
-    phone_number = data.get('phone_number')
-    company_website = data.get('company_website')
-    description = data.get('description')
+        business_number = data.get('business_number')
+        name = data.get('name')
+        email = data.get('email')
+        password = data.get('password')
+        phone_number = data.get('phone_number')
+        company_website = data.get('company_website')
+        description = data.get('description')
 
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
 
-        cursor.execute(
-            """
-            INSERT INTO Contractors 
-            (company_bn, company_name, email, company_password, phone_number, company_website, description)
-            VALUES (%s, %s, %s, %s, %s)
-            """,
-            (business_number, name, email, password, phone_number, company_website, description)
-        )
+            cursor.execute(
+                """
+                INSERT INTO Contractors 
+                (company_bn, company_name, email, company_password, phone_number, company_website, description)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """,
+                (business_number, name, email, password, phone_number, company_website, description)
+            )
 
-        conn.commit()
-        cursor.close()
-        conn.close()
+            conn.commit()
+            cursor.close()
+            conn.close()
 
-        return jsonify({'message': 'Contractor added successfully'}), 201
+            return jsonify({'message': 'Contractor added successfully'}), 201
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+
+    elif request.method == 'GET':
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # Get the 'verified' query parameter (optional)
+
+            verified_only = request.args.get('verified', '').lower() == 'true'
+
+            if verified_only:
+                cursor.execute(
+                    """
+
+                    SELECT company_bn, company_name, email, phone_number, 
+                           company_website, description, verified
+                    FROM Contractors
+                    WHERE verified = TRUE
+                    """
+                )
+
+            else:
+                cursor.execute(
+                    """
+                    SELECT company_bn, company_name, email, phone_number, 
+                           company_website, description, verified
+                    FROM Contractors
+                    """
+                )
+
+            contractors = cursor.fetchall()
+
+            cursor.close()
+            conn.close()
+
+            # Convert to list of dictionaries for JSON response
+
+            contractors_list = []
+
+            for contractor in contractors:
+                contractors_list.append({
+                    'company_bn': contractor[0],
+                    'company_name': contractor[1],
+                    'email': contractor[2],
+                    'phone_number': contractor[3],
+                    'company_website': contractor[4],
+                    'description': contractor[5],
+                    'verified': contractor[6]
+                })
+
+            return jsonify({'contractors': contractors_list}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
 
 
 @app.route('/service', methods=['GET', 'POST'])
@@ -85,6 +143,7 @@ def service_endpoint():
 
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+
     elif request.method == 'POST':
         data = request.get_json()
 
